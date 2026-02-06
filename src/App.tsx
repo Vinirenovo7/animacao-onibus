@@ -13,12 +13,16 @@ function GalaxyCanvas({ active }: { active: boolean }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Forçar tamanho tela cheia
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Ajuste seguro de tamanho
+    const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
 
     const stars: { x: number; y: number; z: number; prevZ: number }[] = [];
-    for (let i = 0; i < 800; i++) {
+    for (let i = 0; i < 500; i++) { // Reduzi para 500 para ficar mais leve no celular
       stars.push({
         x: (Math.random() - 0.5) * canvas.width * 3,
         y: (Math.random() - 0.5) * canvas.height * 3,
@@ -31,12 +35,11 @@ function GalaxyCanvas({ active }: { active: boolean }) {
 
     const animate = () => {
       if (!active) {
-        // Se não ativo, limpa e para
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
       }
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Rastro
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const centerX = canvas.width / 2;
@@ -44,7 +47,7 @@ function GalaxyCanvas({ active }: { active: boolean }) {
 
       stars.forEach(star => {
         star.prevZ = star.z;
-        star.z -= 25; // Velocidade Warp
+        star.z -= 25;
 
         if (star.z < 1) {
           star.z = canvas.width;
@@ -60,12 +63,11 @@ function GalaxyCanvas({ active }: { active: boolean }) {
 
         const size = (1 - star.z / canvas.width) * 4;
 
-        // Desenhar apenas se estiver dentro da tela
         if (sx > 0 && sx < canvas.width && sy > 0 && sy < canvas.height) {
             ctx.beginPath();
             ctx.moveTo(px, py);
             ctx.lineTo(sx, sy);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${size / 3})`;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(size / 3, 1)})`;
             ctx.lineWidth = size / 2;
             ctx.stroke();
 
@@ -81,15 +83,9 @@ function GalaxyCanvas({ active }: { active: boolean }) {
 
     if (active) animate();
 
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', resize);
     };
   }, [active]);
 
@@ -97,21 +93,19 @@ function GalaxyCanvas({ active }: { active: boolean }) {
     <canvas
       ref={canvasRef}
       style={{
-          position: 'fixed',
-          top: 0, 
-          left: 0,
-          width: '100vw',
-          height: '100vh',
+          position: 'fixed', top: 0, left: 0,
+          width: '100%', height: '100%',
           zIndex: active ? 5 : -1,
           opacity: active ? 1 : 0,
           transition: 'opacity 1s',
-          background: '#000'
+          background: '#000',
+          pointerEvents: 'none'
       }}
     />
   );
 }
 
-// ============ EARTH CANVAS ============
+// ============ EARTH CANVAS (SAFE MODE) ============
 function EarthCanvas({ active, progress }: { active: boolean; progress: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const earthImgRef = useRef<HTMLImageElement | null>(null);
@@ -119,14 +113,16 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
 
   useEffect(() => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // IMPORTANTE: Removi crossOrigin para evitar bloqueio no Safari se o header faltar
+    // img.crossOrigin = 'anonymous'; 
     img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/The_Blue_Marble_%28remastered%29.jpg/600px-The_Blue_Marble_%28remastered%29.jpg';
+    
     img.onload = () => {
       earthImgRef.current = img;
       setImgLoaded(true);
     };
     img.onerror = () => {
-        // Fallback imagem simples
+        console.log("Imagem da terra falhou, usando fallback");
         setImgLoaded(false);
     }
   }, []);
@@ -134,12 +130,15 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
 
     let animationId: number;
     let time = 0;
@@ -155,23 +154,19 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
       const maxRadius = Math.min(canvas.width, canvas.height) * 0.35;
       const radius = maxRadius * Math.min(progress, 1);
 
-      // Fundo Espacial
       ctx.fillStyle = '#000010';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Estrelas cintilantes
-      for (let i = 0; i < 200; i++) {
-        const x = (Math.sin(i * 123.5) * 0.5 + 0.5) * canvas.width;
-        const y = (Math.cos(i * 321.7) * 0.5 + 0.5) * canvas.height;
-        const twinkle = Math.sin(time * 0.05 + i) * 0.3 + 0.7;
-        ctx.beginPath();
-        ctx.arc(x, y, twinkle * 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
-        ctx.fill();
+      // Estrelas
+      for (let i = 0; i < 150; i++) {
+        const x = (Math.sin(i * 132) * 0.5 + 0.5) * canvas.width;
+        const y = (Math.cos(i * 453) * 0.5 + 0.5) * canvas.height;
+        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.8})`;
+        ctx.fillRect(x, y, 1.5, 1.5);
       }
 
       if (radius > 5) {
-        // Brilho Atmosférico Externo
+        // Glow
         const outerGlow = ctx.createRadialGradient(centerX, centerY, radius * 0.8, centerX, centerY, radius * 1.5);
         outerGlow.addColorStop(0, 'rgba(100, 180, 255, 0.2)');
         outerGlow.addColorStop(1, 'transparent');
@@ -180,59 +175,57 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
         ctx.arc(centerX, centerY, radius * 1.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Desenhar Terra
+        // Terra
         ctx.save();
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
         ctx.clip();
 
-        if (earthImgRef.current && imgLoaded) {
-          // Imagem
-          const size = radius * 2.1;
-          ctx.drawImage(earthImgRef.current, centerX - size / 2, centerY - size / 2, size, size);
-        } else {
-          // Procedural Fallback
-          const oceanGradient = ctx.createRadialGradient(centerX - radius * 0.3, centerY - radius * 0.3, 0, centerX, centerY, radius);
-          oceanGradient.addColorStop(0, '#1e90ff');
-          oceanGradient.addColorStop(1, '#001a44');
-          ctx.fillStyle = oceanGradient;
-          ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
-          
-          ctx.fillStyle = '#228b22';
-          ctx.beginPath();
-          ctx.ellipse(centerX - radius * 0.2, centerY + radius * 0.2, radius * 0.3, radius * 0.4, 0.2, 0, Math.PI * 2);
-          ctx.fill();
+        // Tenta desenhar imagem, se falhar (Safari), desenha bola azul
+        try {
+            if (earthImgRef.current && imgLoaded) {
+                const size = radius * 2.1;
+                ctx.drawImage(earthImgRef.current, centerX - size / 2, centerY - size / 2, size, size);
+            } else {
+                throw new Error("Fallback");
+            }
+        } catch (e) {
+            // Fallback processual (Garante que nunca fique tela preta)
+            const oceanGradient = ctx.createRadialGradient(centerX - radius * 0.3, centerY - radius * 0.3, 0, centerX, centerY, radius);
+            oceanGradient.addColorStop(0, '#1e90ff');
+            oceanGradient.addColorStop(1, '#001a44');
+            ctx.fillStyle = oceanGradient;
+            ctx.fill();
+            
+            ctx.fillStyle = '#228b22';
+            ctx.beginPath();
+            ctx.ellipse(centerX - radius * 0.2, centerY + radius * 0.2, radius * 0.3, radius * 0.4, 0.2, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         ctx.restore();
 
-        // Marcador SP
+        // Marcador
         const markerX = centerX - radius * 0.15;
         const markerY = centerY + radius * 0.25;
 
-        // Ponto
         ctx.beginPath();
         ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
         ctx.fillStyle = '#00ff88';
         ctx.fill();
         
-        // Ondas de pulso
-        const pulseR = 10 + Math.sin(time * 0.1) * 10;
         ctx.beginPath();
-        ctx.arc(markerX, markerY, pulseR, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(0, 255, 136, ${0.8 - Math.sin(time * 0.1) * 0.5})`;
+        ctx.arc(markerX, markerY, 10 + Math.sin(time * 0.1) * 8, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0, 255, 136, 0.6)`;
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // HUD Text
+        // Texto
         if (progress > 0.3) {
           ctx.font = 'bold 16px monospace';
           ctx.fillStyle = '#00ff88';
           ctx.textAlign = 'center';
-          ctx.shadowColor = '#00ff88';
-          ctx.shadowBlur = 10;
-          ctx.fillText('LOCALIZANDO: SÃO PAULO, BRASIL', centerX, centerY + radius + 40);
-          ctx.shadowBlur = 0;
+          ctx.fillText('LOCALIZANDO: SÃO PAULO', centerX, centerY + radius + 40);
         }
       }
 
@@ -242,15 +235,9 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
 
     if (active) animate();
 
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', resize);
     };
   }, [active, progress, imgLoaded]);
 
@@ -258,14 +245,12 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
     <canvas
       ref={canvasRef}
       style={{
-          position: 'fixed',
-          top: 0, 
-          left: 0,
-          width: '100vw',
-          height: '100vh',
+          position: 'fixed', top: 0, left: 0,
+          width: '100%', height: '100%',
           zIndex: active ? 10 : -1,
           opacity: active ? 1 : 0,
-          transition: 'opacity 1s'
+          transition: 'opacity 1s',
+          pointerEvents: 'none'
       }}
     />
   );
@@ -278,12 +263,15 @@ function MatrixRain({ active }: { active: boolean }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
 
     const columns = Math.floor(canvas.width / 20);
     const drops: number[] = Array(columns).fill(0).map(() => Math.random() * -50);
@@ -293,10 +281,8 @@ function MatrixRain({ active }: { active: boolean }) {
 
     const animate = () => {
       if (!active) return;
-
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.font = '15px monospace';
 
       for (let i = 0; i < drops.length; i++) {
@@ -307,31 +293,27 @@ function MatrixRain({ active }: { active: boolean }) {
         ctx.fillStyle = '#00ff88';
         ctx.fillText(char, x, y);
 
-        if (y > canvas.height && Math.random() > 0.98) {
-          drops[i] = 0;
-        }
+        if (y > canvas.height && Math.random() > 0.98) drops[i] = 0;
         drops[i]++;
       }
-
       animationId = requestAnimationFrame(animate);
     };
 
     if (active) animate();
 
-    return () => cancelAnimationFrame(animationId);
+    return () => {
+        cancelAnimationFrame(animationId);
+        window.removeEventListener('resize', resize);
+    };
   }, [active]);
 
   return (
     <canvas
       ref={canvasRef}
       style={{
-          position: 'fixed',
-          top: 0, 
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: -1,
-          opacity: active ? 0.2 : 0,
+          position: 'fixed', top: 0, left: 0,
+          width: '100%', height: '100%',
+          zIndex: -1, opacity: active ? 0.2 : 0,
           pointerEvents: 'none'
       }}
     />
@@ -345,11 +327,9 @@ function BusAnimation() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Ajuste de resolução para nitidez
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
     canvas.width = width * 2;
@@ -363,27 +343,23 @@ function BusAnimation() {
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
-
-      // --- CÉU E FUNDO ---
+      
+      // Fundo
       const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
       skyGrad.addColorStop(0, '#0a1a0a');
       skyGrad.addColorStop(1, '#1a2a1a');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // --- CIDADE (SILHUETA) ---
+      // Cidade
       ctx.fillStyle = '#001a0a';
-      const buildings = [40, 60, 35, 80, 50, 70, 45, 55, 75, 40, 65, 50, 85, 45, 70];
-      const bw = width / buildings.length;
-      buildings.forEach((h, i) => {
-        ctx.fillRect(i * bw, height - 25 - h * 0.5, bw - 2, h * 0.5);
-      });
+      for(let i=0; i<15; i++) {
+          ctx.fillRect(i * (width/15), height - 25 - (Math.sin(i)*20 + 30), (width/15)-2, 100);
+      }
 
-      // --- ESTRADA ---
+      // Estrada
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, height - 22, width, 22);
-
-      // Faixas Amarelas
       ctx.strokeStyle = '#ffcc00';
       ctx.lineWidth = 2;
       ctx.setLineDash([15, 10]);
@@ -394,8 +370,8 @@ function BusAnimation() {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // --- DESENHO DO ÔNIBUS ---
-      const busY = height - 60 + Math.sin(time * 0.4) * 0.5; // Bounce leve
+      // Ônibus
+      const busY = height - 60 + Math.sin(time * 0.4) * 0.5;
       const busW = 130;
       const busH = 42;
 
@@ -408,19 +384,15 @@ function BusAnimation() {
       ctx.ellipse(busW / 2, busH + 5, busW / 2 - 5, 4, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Corpo (Branco)
+      // Lataria
       ctx.fillStyle = '#f8f8f8';
       ctx.beginPath();
       ctx.roundRect(0, 8, busW, busH - 8, [6, 6, 3, 3]);
       ctx.fill();
-
-      // Faixa Verde Topo
       ctx.fillStyle = '#00aa55';
       ctx.beginPath();
       ctx.roundRect(0, 8, busW, 14, [6, 6, 0, 0]);
       ctx.fill();
-
-      // Faixa Verde Meio
       ctx.fillStyle = '#00cc66';
       ctx.fillRect(0, 30, busW, 6);
 
@@ -431,93 +403,45 @@ function BusAnimation() {
         ctx.roundRect(10 + i * 20, 10, 15, 15, 2);
         ctx.fill();
       }
-
-      // Para-brisa
-      ctx.fillStyle = '#87ceeb';
       ctx.beginPath();
-      ctx.roundRect(busW - 22, 10, 18, 18, [2, 5, 2, 2]);
+      ctx.roundRect(busW - 22, 10, 18, 18, [2, 5, 2, 2]); // Parabrisa
       ctx.fill();
 
-      // Porta
-      ctx.fillStyle = '#ddd';
-      ctx.strokeStyle = '#00aa55';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(busW - 40, 22, 12, 18, 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Farol
-      ctx.fillStyle = '#ffee88';
-      ctx.fillRect(busW - 5, 30, 5, 8);
-
-      // Brilho do Farol
-      const hlGlow = ctx.createRadialGradient(busW + 8, 34, 0, busW + 8, 34, 30);
-      hlGlow.addColorStop(0, 'rgba(255,238,136,0.4)');
-      hlGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = hlGlow;
-      ctx.fillRect(busW - 10, 10, 50, 50);
-
-      // Texto: 524M
+      // Detalhes
       ctx.fillStyle = '#fff';
-      ctx.fillRect(5, 22, 28, 10);
+      ctx.fillRect(5, 22, 28, 10); // Letreiro
       ctx.fillStyle = '#00aa55';
       ctx.font = 'bold 7px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('524M', 19, 30);
-
-      // Texto: MOVEBUSS
-      ctx.fillStyle = '#00aa55';
       ctx.font = 'bold 5px Arial';
       ctx.textAlign = 'left';
       ctx.fillText('MOVEBUSS', 45, busH - 4);
 
       // Rodas
       const drawWheel = (x: number) => {
-        const wy = busH - 2;
-        // Pneu
-        ctx.fillStyle = '#111';
-        ctx.beginPath();
-        ctx.arc(x, wy, 8, 0, Math.PI * 2);
-        ctx.fill();
-        // Calota
-        ctx.fillStyle = '#bbb';
-        ctx.beginPath();
-        ctx.arc(x, wy, 5, 0, Math.PI * 2);
-        ctx.fill();
-        // Raios
-        ctx.save();
-        ctx.translate(x, wy);
-        ctx.rotate(wheelAngle);
-        ctx.strokeStyle = '#888';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 5; i++) {
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(0, 4);
-          ctx.stroke();
-          ctx.rotate(Math.PI * 2 / 5);
-        }
-        ctx.restore();
+          const wy = busH - 2;
+          ctx.fillStyle = '#111';
+          ctx.beginPath(); ctx.arc(x, wy, 8, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#bbb';
+          ctx.beginPath(); ctx.arc(x, wy, 5, 0, Math.PI*2); ctx.fill();
+          ctx.save();
+          ctx.translate(x, wy);
+          ctx.rotate(wheelAngle);
+          ctx.strokeStyle = '#888';
+          ctx.lineWidth = 1;
+          for(let k=0; k<5; k++) {
+              ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,4); ctx.stroke();
+              ctx.rotate(Math.PI*2/5);
+          }
+          ctx.restore();
       };
-
       drawWheel(22);
       drawWheel(busW - 22);
 
-      // Fumaça escapamento
-      if (Math.sin(time * 0.25) > 0.6) {
-        ctx.fillStyle = 'rgba(120,120,120,0.3)';
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.arc(-8 - i * 6 + Math.sin(time + i) * 2, busH - 8, 3 + i * 1.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
       ctx.restore();
 
-      // Atualização Posição
-      busX += 2.5; // Velocidade
+      busX += 2.5;
       if (busX > width + 50) busX = -180;
       wheelAngle += 0.2;
       time += 0.1;
@@ -526,28 +450,14 @@ function BusAnimation() {
     };
 
     animate();
-
     return () => cancelAnimationFrame(animationId);
   }, []);
 
   return (
-    <div style={{ 
-        position: 'relative', 
-        width: '100%', 
-        height: '100px', 
-        borderRadius: '8px', 
-        border: '1px solid rgba(0,255,136,0.3)', 
-        overflow: 'hidden',
-        background: '#000',
-        marginBottom: '20px'
-    }}>
+    <div style={{ position: 'relative', width: '100%', height: '100px', borderRadius: '8px', border: '1px solid rgba(0,255,136,0.3)', overflow: 'hidden', background: '#000', marginBottom: '20px' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-      <div style={{ position: 'absolute', top: '8px', left: '12px', color: '#00ff88', fontSize: '10px', fontFamily: 'monospace', opacity: 0.7 }}>
-        FROTA EM MOVIMENTO
-      </div>
-      <div style={{ position: 'absolute', top: '8px', right: '12px', color: '#00ff88', fontSize: '10px', fontFamily: 'monospace' }}>
-        ● LIVE
-      </div>
+      <div style={{ position: 'absolute', top: '8px', left: '12px', color: '#00ff88', fontSize: '10px', fontFamily: 'monospace' }}>FROTA EM MOVIMENTO</div>
+      <div style={{ position: 'absolute', top: '8px', right: '12px', color: '#00ff88', fontSize: '10px', fontFamily: 'monospace' }}>● LIVE</div>
     </div>
   );
 }
@@ -557,49 +467,26 @@ function LoadingOverlay({ stage }: { stage: Stage }) {
     const [text, setText] = useState('');
     
     useEffect(() => {
-        const msgs = {
-            galaxy: ['INICIANDO SISTEMA...', 'SATÉLITE CONECTADO...'],
-            earth: ['LOCALIZANDO PLANETA TERRA...', 'FOCANDO EM SÃO PAULO...'],
-            dashboard: []
-        };
+        const msgs = { galaxy: ['SISTEMA...'], earth: ['LOCALIZANDO...'], dashboard: [] };
         const currentMsgs = msgs[stage];
-        if(!currentMsgs.length) return;
+        if(!currentMsgs || !currentMsgs.length) return;
 
-        let msgIdx = 0;
         let charIdx = 0;
         const interval = setInterval(() => {
-            const currentMsg = currentMsgs[msgIdx];
-            if(charIdx <= currentMsg.length) {
-                setText(currentMsg.slice(0, charIdx));
+            if(charIdx <= currentMsgs[0].length) {
+                setText(currentMsgs[0].slice(0, charIdx));
                 charIdx++;
-            } else {
-                charIdx = 0;
-                msgIdx = (msgIdx + 1) % currentMsgs.length;
             }
-        }, 50);
-
+        }, 100);
         return () => clearInterval(interval);
     }, [stage]);
 
     if(stage === 'dashboard') return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            paddingBottom: '50px',
-            zIndex: 50,
-            pointerEvents: 'none'
-        }}>
-            <h1 style={{ color: '#00ff88', fontSize: '3em', fontFamily: 'monospace', fontWeight: 'bold', textShadow: '2px 2px #ff3e3e', marginBottom: '10px' }}>
-                MOVEBUSS
-            </h1>
-            <div style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid #00ff88', padding: '10px 20px', borderRadius: '5px', minWidth: '300px' }}>
-                <span style={{ color: '#ff3e3e', marginRight: '10px' }}>$</span>
+        <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: '80px', zIndex: 50, pointerEvents: 'none' }}>
+            <h1 style={{ color: '#00ff88', fontSize: '2.5em', fontFamily: 'monospace', fontWeight: 'bold', textShadow: '2px 2px #ff3e3e', marginBottom: '10px' }}>MOVEBUSS</h1>
+            <div style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid #00ff88', padding: '5px 15px', borderRadius: '5px' }}>
                 <span style={{ color: '#00ff88', fontFamily: 'monospace' }}>{text}_</span>
             </div>
         </div>
@@ -695,15 +582,8 @@ function Dashboard({ visible }: { visible: boolean }) {
 
   return (
     <div style={{
-        position: 'relative',
-        zIndex: 20,
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '20px',
-        color: '#00ff88',
-        fontFamily: "'Courier New', monospace",
-        opacity: 0,
-        animation: 'fadeIn 1s forwards'
+        position: 'relative', zIndex: 20, maxWidth: '1200px', margin: '0 auto', padding: '20px',
+        color: '#00ff88', fontFamily: "'Courier New', monospace", opacity: 0, animation: 'fadeIn 1s forwards'
     }}>
         <style>{`
             @keyframes fadeIn { to { opacity: 1; } }
@@ -712,16 +592,7 @@ function Dashboard({ visible }: { visible: boolean }) {
         `}</style>
 
         {/* HEADER */}
-        <header style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            borderBottom: '2px solid #00ff88', 
-            paddingBottom: '20px', 
-            marginBottom: '30px',
-            flexWrap: 'wrap',
-            gap: '20px'
-        }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #00ff88', paddingBottom: '20px', marginBottom: '30px', flexWrap: 'wrap', gap: '20px' }}>
             <div>
                 <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', textShadow: '2px 2px #ff3e3e', margin: 0 }}>MOVEBUSS</h1>
                 <p style={{ letterSpacing: '4px', color: '#00d4ff', fontSize: '0.8rem', margin: '5px 0 0 0' }}>CONTROLE OPERACIONAL</p>
@@ -732,48 +603,18 @@ function Dashboard({ visible }: { visible: boolean }) {
             </div>
         </header>
 
-        {/* IMAGEM 1 */}
+        {/* IMAGENS E CONTEUDO */}
         <div style={{ position: 'relative', borderRadius: '10px', border: '1px solid #00ff88', overflow: 'hidden', marginBottom: '30px' }}>
             <img src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.29.58_c74f9ad6-1.jpg" style={{ width: '100%', display: 'block' }} />
             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: '#00ff88', boxShadow: '0 0 20px #00ff88', animation: 'scan 4s linear infinite' }} />
         </div>
 
-        {/* BUSCA */}
-        <input 
-            type="text" 
-            placeholder="🔍 Buscar linha..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            style={{ 
-                width: '100%', 
-                padding: '15px', 
-                background: 'rgba(0,0,0,0.6)', 
-                border: '1px solid #00ff88', 
-                color: '#fff', 
-                borderRadius: '8px', 
-                marginBottom: '20px',
-                outline: 'none'
-            }}
-        />
-
+        <input type="text" placeholder="🔍 Buscar linha..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '15px', background: 'rgba(0,0,0,0.6)', border: '1px solid #00ff88', color: '#fff', borderRadius: '8px', marginBottom: '20px', outline: 'none' }} />
         <p style={{ textAlign: 'center', color: '#ff3e3e', fontSize: '0.9rem', marginBottom: '20px' }}>[ SELECIONE UMA LINHA PARA TELEMETRIA ]</p>
 
-        {/* GRID */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px', marginBottom: '30px' }}>
             {filteredLinhas.map(l => (
-                <div 
-                    key={l.id} 
-                    className="hover-card"
-                    onClick={() => setSelectedLinha(l)}
-                    style={{ 
-                        background: 'linear-gradient(135deg, #001a0d, #000)', 
-                        border: '1px solid #004422', 
-                        padding: '20px', 
-                        borderRadius: '8px', 
-                        cursor: 'pointer',
-                        transition: '0.3s'
-                    }}
-                >
+                <div key={l.id} className="hover-card" onClick={() => setSelectedLinha(l)} style={{ background: 'linear-gradient(135deg, #001a0d, #000)', border: '1px solid #004422', padding: '20px', borderRadius: '8px', cursor: 'pointer', transition: '0.3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#ff3e3e', fontWeight: 'bold', fontSize: '1.2rem' }}>{l.id}</span>
                         <span style={{ width: '8px', height: '8px', background: '#00ff88', borderRadius: '50%' }} />
@@ -783,40 +624,23 @@ function Dashboard({ visible }: { visible: boolean }) {
             ))}
         </div>
 
-        {/* IMAGEM 2 */}
         <div style={{ position: 'relative', borderRadius: '10px', border: '1px solid rgba(0,255,136,0.4)', overflow: 'hidden', marginBottom: '30px' }}>
             <img src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.30.07_ed1178f5-1.jpg" style={{ width: '100%', display: 'block' }} />
             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: '#00ff88', boxShadow: '0 0 20px #00ff88', animation: 'scan 4s linear infinite', animationDelay: '2s' }} />
         </div>
 
-        {/* BUS ANIMATION COMPONENT */}
         <BusAnimation />
 
-        {/* FOOTER */}
         <footer style={{ textAlign: 'center', borderTop: '1px solid #333', paddingTop: '30px', color: '#666', fontSize: '0.8rem' }}>
-            SISTEMA OPERACIONAL MOVEBUSS // 2026
-            <br/>
+            SISTEMA OPERACIONAL MOVEBUSS // 2026<br/>
             <a href="https://movebuss.com.br" style={{ color: '#00ff88', textDecoration: 'none', fontSize: '1.2rem', marginTop: '10px', display: 'inline-block' }}>movebuss.com.br</a>
         </footer>
 
-        {/* MODAL */}
         {selectedLinha && (
-            <div style={{
-                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                background: 'rgba(0,0,0,0.9)', zIndex: 100,
-                display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px'
-            }} onClick={() => setSelectedLinha(null)}>
-                <div style={{
-                    background: '#000', border: '2px solid #00ff88', borderRadius: '10px',
-                    padding: '30px', width: '100%', maxWidth: '400px',
-                    boxShadow: '0 0 50px rgba(0,255,136,0.2)'
-                }} onClick={e => e.stopPropagation()}>
-                    <h2 style={{ color: '#ff3e3e', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '15px' }}>
-                        LINHA {selectedLinha.id}
-                    </h2>
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }} onClick={() => setSelectedLinha(null)}>
+                <div style={{ background: '#000', border: '2px solid #00ff88', borderRadius: '10px', padding: '30px', width: '100%', maxWidth: '400px', boxShadow: '0 0 50px rgba(0,255,136,0.2)' }} onClick={e => e.stopPropagation()}>
+                    <h2 style={{ color: '#ff3e3e', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '15px' }}>LINHA {selectedLinha.id}</h2>
                     <p style={{ color: '#fff', marginBottom: '20px', fontSize: '0.9rem' }}>{selectedLinha.nome}</p>
-                    
-                    {/* DADOS */}
                     <div style={{ fontSize: '0.9rem' }}>
                         {[
                             ['Duração Viagem', `${dadosGTFS[selectedLinha.id]?.dur || 45} min`],
@@ -826,22 +650,11 @@ function Dashboard({ visible }: { visible: boolean }) {
                             ['Distância', `${dadosGTFS[selectedLinha.id]?.dist || 12} km`],
                         ].map(([label, value], i) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dotted #333' }}>
-                                <span style={{ color: '#888' }}>{label}:</span>
-                                <span style={{ color: '#00ff88' }}>{value}</span>
+                                <span style={{ color: '#888' }}>{label}:</span><span style={{ color: '#00ff88' }}>{value}</span>
                             </div>
                         ))}
                     </div>
-
-                    <button 
-                        onClick={() => setSelectedLinha(null)}
-                        style={{ 
-                            width: '100%', marginTop: '25px', padding: '15px', 
-                            background: '#ff3e3e', color: 'white', border: 'none', 
-                            fontWeight: 'bold', cursor: 'pointer', borderRadius: '5px' 
-                        }}
-                    >
-                        FECHAR TERMINAL
-                    </button>
+                    <button onClick={() => setSelectedLinha(null)} style={{ width: '100%', marginTop: '25px', padding: '15px', background: '#ff3e3e', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', borderRadius: '5px' }}>FECHAR TERMINAL</button>
                 </div>
             </div>
         )}
@@ -855,7 +668,6 @@ export default function App() {
   const [earthProgress, setEarthProgress] = useState(0);
 
   useEffect(() => {
-    // Sequência de Animação
     const t1 = setTimeout(() => setStage('earth'), 3000);
     return () => clearTimeout(t1);
   }, []);
@@ -864,19 +676,12 @@ export default function App() {
     if (stage === 'earth') {
       const interval = setInterval(() => {
         setEarthProgress(prev => {
-          if (prev >= 1) {
-            clearInterval(interval);
-            return 1;
-          }
+          if (prev >= 1) { clearInterval(interval); return 1; }
           return prev + 0.02;
         });
       }, 50);
-
       const t2 = setTimeout(() => setStage('dashboard'), 4000);
-      return () => {
-        clearInterval(interval);
-        clearTimeout(t2);
-      };
+      return () => { clearInterval(interval); clearTimeout(t2); };
     }
   }, [stage]);
 
@@ -887,17 +692,8 @@ export default function App() {
       <MatrixRain active={stage === 'dashboard'} />
       <LoadingOverlay stage={stage} />
       <Dashboard visible={stage === 'dashboard'} />
-
       {stage !== 'dashboard' && (
-        <button
-          onClick={() => setStage('dashboard')}
-          style={{
-              position: 'fixed', bottom: '20px', right: '20px',
-              background: 'rgba(0,0,0,0.5)', border: '1px solid #00ff88',
-              color: '#00ff88', padding: '10px 20px', cursor: 'pointer', zIndex: 100,
-              borderRadius: '5px', fontSize: '0.8rem'
-          }}
-        >
+        <button onClick={() => setStage('dashboard')} style={{ position: 'fixed', bottom: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: '1px solid #00ff88', color: '#00ff88', padding: '10px 20px', cursor: 'pointer', zIndex: 100, borderRadius: '5px', fontSize: '0.8rem' }}>
           PULAR INTRO →
         </button>
       )}
