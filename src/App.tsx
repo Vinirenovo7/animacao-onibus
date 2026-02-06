@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 
-// ==================== TIPOS ====================
 interface Linha {
   id: string
   nome: string
@@ -21,7 +20,6 @@ interface Star {
   color: string
 }
 
-// ==================== DADOS ====================
 const dadosGTFS: Record<string, DadosLinha> = {
   "524M-10": {dur: 73, int: 7, dist: 12.5, frot: 10},
   "3112-10": {dur: 105, int: 12, dist: 12.5, frot: 9},
@@ -94,14 +92,12 @@ const linhas: Linha[] = [
   {id: "5025-10", nome: "Jardim Guairacá – Metrô Tamanduateí"}
 ]
 
-// ==================== COMPONENTE GALÁXIA ====================
 function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -109,10 +105,9 @@ function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
     canvas.height = window.innerHeight
 
     const stars: Star[] = []
-    const numStars = 800
     const colors = ['#ffffff', '#00ff88', '#00d4ff', '#ff6b6b', '#ffd93d']
 
-    for (let i = 0; i < numStars; i++) {
+    for (let i = 0; i < 800; i++) {
       stars.push({
         x: (Math.random() - 0.5) * canvas.width * 3,
         y: (Math.random() - 0.5) * canvas.height * 3,
@@ -191,7 +186,6 @@ function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-// ==================== COMPONENTE TERRA ====================
 function EarthCanvas({ onComplete }: { onComplete: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [zoomLevel, setZoomLevel] = useState(0)
@@ -201,29 +195,19 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
     const img = new Image()
     img.crossOrigin = "anonymous"
     img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/The_Blue_Marble_%28remastered%29.jpg/800px-The_Blue_Marble_%28remastered%29.jpg"
-    img.onload = () => {
-      earthImageRef.current = img
-    }
+    img.onload = () => { earthImageRef.current = img }
   }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    interface EarthStar {
-      x: number
-      y: number
-      size: number
-      alpha: number
-    }
-
-    const stars: EarthStar[] = []
+    const stars: {x: number, y: number, size: number, alpha: number}[] = []
     for (let i = 0; i < 300; i++) {
       stars.push({
         x: Math.random() * canvas.width,
@@ -264,13 +248,7 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
         ctx!.translate(cx, cy)
         rotation += 0.002
         const offsetX = (rotation * 100) % (radius * 2)
-        ctx!.drawImage(
-          earthImageRef.current,
-          -radius - offsetX,
-          -radius,
-          radius * 4,
-          radius * 2
-        )
+        ctx!.drawImage(earthImageRef.current, -radius - offsetX, -radius, radius * 4, radius * 2)
         ctx!.restore()
       } else {
         const gradient = ctx!.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius)
@@ -283,12 +261,6 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
         ctx!.fillStyle = '#3d8b3d'
         ctx!.beginPath()
         ctx!.ellipse(cx - radius * 0.3, cy - radius * 0.2, radius * 0.4, radius * 0.3, 0.3, 0, Math.PI * 2)
-        ctx!.fill()
-        ctx!.beginPath()
-        ctx!.ellipse(cx + radius * 0.4, cy + radius * 0.1, radius * 0.25, radius * 0.35, -0.2, 0, Math.PI * 2)
-        ctx!.fill()
-        ctx!.beginPath()
-        ctx!.ellipse(cx + radius * 0.2, cy + radius * 0.5, radius * 0.15, radius * 0.1, 0.5, 0, Math.PI * 2)
         ctx!.fill()
       }
 
@@ -319,70 +291,24 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
       ctx!.restore()
 
       if (zoomLevel > 0.3) {
-        const spLat = -23.55
-        const spLon = -46.63
-        const spX = cx + (spLon / 180) * radius * 0.8
-        const spY = cy + (spLat / 90) * radius * 0.5
+        const spX = cx + 20
+        const spY = cy + 10
 
         ctx!.beginPath()
         ctx!.arc(spX, spY, 8 + Math.sin(Date.now() / 200) * 3, 0, Math.PI * 2)
         ctx!.fillStyle = 'rgba(0, 255, 136, 0.8)'
         ctx!.fill()
 
-        ctx!.beginPath()
-        ctx!.arc(spX, spY, 15 + Math.sin(Date.now() / 150) * 5, 0, Math.PI * 2)
-        ctx!.strokeStyle = 'rgba(0, 255, 136, 0.5)'
-        ctx!.lineWidth = 2
-        ctx!.stroke()
-
-        ctx!.font = '14px "Share Tech Mono", monospace'
+        ctx!.font = '14px monospace'
         ctx!.fillStyle = '#00ff88'
         ctx!.fillText('SÃO PAULO, BRASIL', spX + 20, spY)
-        ctx!.font = '11px "Share Tech Mono", monospace'
-        ctx!.fillStyle = '#00ff88aa'
-        ctx!.fillText('23°33\'01"S 46°38\'02"W', spX + 20, spY + 16)
       }
-
-      const hudColor = '#00ff88'
-      ctx!.strokeStyle = hudColor
-      ctx!.lineWidth = 2
-
-      ctx!.beginPath()
-      ctx!.moveTo(20, 20)
-      ctx!.lineTo(20, 60)
-      ctx!.lineTo(60, 20)
-      ctx!.lineTo(20, 20)
-      ctx!.stroke()
-
-      ctx!.beginPath()
-      ctx!.moveTo(canvas!.width - 20, 20)
-      ctx!.lineTo(canvas!.width - 20, 60)
-      ctx!.lineTo(canvas!.width - 60, 20)
-      ctx!.lineTo(canvas!.width - 20, 20)
-      ctx!.stroke()
-
-      ctx!.beginPath()
-      ctx!.moveTo(20, canvas!.height - 20)
-      ctx!.lineTo(20, canvas!.height - 60)
-      ctx!.lineTo(60, canvas!.height - 20)
-      ctx!.lineTo(20, canvas!.height - 20)
-      ctx!.stroke()
-
-      ctx!.beginPath()
-      ctx!.moveTo(canvas!.width - 20, canvas!.height - 20)
-      ctx!.lineTo(canvas!.width - 20, canvas!.height - 60)
-      ctx!.lineTo(canvas!.width - 60, canvas!.height - 20)
-      ctx!.lineTo(canvas!.width - 20, canvas!.height - 20)
-      ctx!.stroke()
 
       animationId = requestAnimationFrame(animate)
     }
 
     animate()
-
-    return () => {
-      cancelAnimationFrame(animationId)
-    }
+    return () => cancelAnimationFrame(animationId)
   }, [zoomLevel])
 
   useEffect(() => {
@@ -396,7 +322,6 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
         return prev + 0.025
       })
     }, 100)
-
     return () => clearInterval(zoomInterval)
   }, [onComplete])
 
@@ -408,17 +333,13 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
           LOCALIZANDO: SÃO PAULO, BRASIL
         </p>
         <div className="mt-2 w-64 h-1 bg-gray-800 rounded-full overflow-hidden mx-auto">
-          <div 
-            className="h-full bg-[#00ff88] transition-all duration-100"
-            style={{ width: `${zoomLevel * 100}%` }}
-          />
+          <div className="h-full bg-[#00ff88] transition-all duration-100" style={{ width: `${zoomLevel * 100}%` }} />
         </div>
       </div>
     </div>
   )
 }
 
-// ==================== COMPONENTE ÔNIBUS ====================
 function BusAnimation({ onComplete }: { onComplete: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [busPosition, setBusPosition] = useState(-300)
@@ -426,7 +347,6 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -454,26 +374,17 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
       ctx!.fillRect(x, y - 30, busWidth, 25)
 
       ctx!.fillStyle = '#1a1a2e'
-      const windowWidth = 35
-      const windowHeight = 30
-      const windowY = y - busHeight + 30
       for (let i = 0; i < 5; i++) {
         const windowX = x + 45 + i * 45
         ctx!.beginPath()
-        ctx!.roundRect(windowX, windowY, windowWidth, windowHeight, 3)
+        ctx!.roundRect(windowX, y - busHeight + 30, 35, 30, 3)
         ctx!.fill()
-
-        ctx!.fillStyle = 'rgba(100, 200, 255, 0.3)'
-        ctx!.fillRect(windowX + 2, windowY + 2, 8, windowHeight - 4)
-        ctx!.fillStyle = '#1a1a2e'
       }
 
       ctx!.fillStyle = '#1a1a2e'
       ctx!.beginPath()
       ctx!.roundRect(x + 5, y - busHeight + 20, 30, 50, 5)
       ctx!.fill()
-      ctx!.fillStyle = 'rgba(100, 200, 255, 0.3)'
-      ctx!.fillRect(x + 7, y - busHeight + 22, 6, 46)
 
       ctx!.fillStyle = '#111'
       ctx!.fillRect(x + 5, y - busHeight - 15, busWidth - 10, 18)
@@ -513,35 +424,17 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
           ctx!.stroke()
         }
         ctx!.restore()
-
-        ctx!.fillStyle = '#888'
-        ctx!.beginPath()
-        ctx!.arc(wx, wheelY, 5, 0, Math.PI * 2)
-        ctx!.fill()
       }
 
       ctx!.fillStyle = '#ffff00'
       ctx!.beginPath()
       ctx!.arc(x + busWidth - 5, y - busHeight + 35, 8, 0, Math.PI * 2)
       ctx!.fill()
-      ctx!.beginPath()
-      ctx!.arc(x + busWidth - 5, y - 20, 8, 0, Math.PI * 2)
-      ctx!.fill()
 
       ctx!.fillStyle = '#ff0000'
       ctx!.beginPath()
       ctx!.arc(x + 5, y - busHeight + 35, 6, 0, Math.PI * 2)
       ctx!.fill()
-      ctx!.beginPath()
-      ctx!.arc(x + 5, y - 20, 6, 0, Math.PI * 2)
-      ctx!.fill()
-
-      if (Math.random() > 0.7) {
-        ctx!.fillStyle = 'rgba(150, 150, 150, 0.4)'
-        ctx!.beginPath()
-        ctx!.arc(x - 10 - Math.random() * 20, y - 10, 5 + Math.random() * 5, 0, Math.PI * 2)
-        ctx!.fill()
-      }
     }
 
     function animate() {
@@ -554,12 +447,7 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
 
       for (let i = 0; i < 100; i++) {
         ctx!.beginPath()
-        ctx!.arc(
-          (i * 137) % canvas!.width,
-          (i * 97) % (canvas!.height * 0.4),
-          Math.random() * 1.5,
-          0, Math.PI * 2
-        )
+        ctx!.arc((i * 137) % canvas!.width, (i * 97) % (canvas!.height * 0.4), Math.random() * 1.5, 0, Math.PI * 2)
         ctx!.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.5})`
         ctx!.fill()
       }
@@ -570,23 +458,10 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
         const buildingHeight = 80 + Math.sin(i * 2) * 40
         const buildingWidth = 60 + Math.cos(i) * 20
         ctx!.fillRect(buildingX, canvas!.height / 2 - buildingHeight + 50, buildingWidth, buildingHeight)
-
-        ctx!.fillStyle = 'rgba(255, 200, 100, 0.6)'
-        for (let wy = 0; wy < buildingHeight - 20; wy += 20) {
-          for (let wx = 10; wx < buildingWidth - 10; wx += 15) {
-            if (Math.random() > 0.3) {
-              ctx!.fillRect(buildingX + wx, canvas!.height / 2 - buildingHeight + 55 + wy, 8, 12)
-            }
-          }
-        }
-        ctx!.fillStyle = '#1a1a2e'
       }
 
       ctx!.fillStyle = '#333'
       ctx!.fillRect(0, canvas!.height / 2 + 70, canvas!.width, 100)
-
-      ctx!.fillStyle = '#444'
-      ctx!.fillRect(0, canvas!.height / 2 + 68, canvas!.width, 5)
 
       roadOffset = (roadOffset + 8) % 50
       ctx!.fillStyle = '#ffcc00'
@@ -601,7 +476,6 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
     }
 
     animate()
-
     return () => cancelAnimationFrame(animationId)
   }, [busPosition])
 
@@ -617,7 +491,6 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
         return prev + 8
       })
     }, 16)
-
     return () => clearInterval(moveInterval)
   }, [onComplete])
 
@@ -636,14 +509,12 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-// ==================== COMPONENTE MATRIX ====================
 function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -652,52 +523,31 @@ function MatrixRain() {
 
     const columns = Math.floor(canvas.width / 20)
     const drops: number[] = []
+    for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100
 
-    for (let i = 0; i < columns; i++) {
-      drops[i] = Math.random() * -100
-    }
-
-    const chars = 'MOVEBUSS01アイウエオカキクケコサシスセソタチツテト'
+    const chars = 'MOVEBUSS01アイウエオカキクケコ'
 
     function animate() {
       ctx!.fillStyle = 'rgba(0, 0, 0, 0.05)'
       ctx!.fillRect(0, 0, canvas!.width, canvas!.height)
-
       ctx!.fillStyle = '#00ff88'
       ctx!.font = '15px monospace'
 
       for (let i = 0; i < drops.length; i++) {
         const char = chars[Math.floor(Math.random() * chars.length)]
-        const x = i * 20
-        const y = drops[i] * 20
-
         ctx!.fillStyle = `rgba(0, 255, 136, ${Math.random() * 0.5 + 0.3})`
-        ctx!.fillText(char, x, y)
-
-        if (y > canvas!.height && Math.random() > 0.99) {
-          drops[i] = 0
-        }
+        ctx!.fillText(char, i * 20, drops[i] * 20)
+        if (drops[i] * 20 > canvas!.height && Math.random() > 0.99) drops[i] = 0
         drops[i]++
       }
-
       requestAnimationFrame(animate)
     }
-
     animate()
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   return <canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-30" />
 }
 
-// ==================== COMPONENTE DASHBOARD ====================
 function Dashboard() {
   const [selectedLinha, setSelectedLinha] = useState<Linha | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -707,22 +557,16 @@ function Dashboard() {
     l.nome.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const getDados = (id: string): DadosLinha => {
-    return dadosGTFS[id] || { dur: 45, int: 12, dist: 12, frot: 8 }
-  }
+  const getDados = (id: string): DadosLinha => dadosGTFS[id] || { dur: 45, int: 12, dist: 12, frot: 8 }
 
   return (
     <div className="relative z-10 min-h-screen">
       <MatrixRain />
-
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-6">
-        {/* Header */}
         <header className="border-b border-[#00ff88]/30 pb-4 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-orbitron font-bold text-[#00ff88] tracking-wider animate-pulse">
-                MOVEBUSS
-              </h1>
+              <h1 className="text-3xl md:text-4xl font-orbitron font-bold text-[#00ff88] tracking-wider animate-pulse">MOVEBUSS</h1>
               <p className="text-xs tracking-[0.3em] text-white/50 mt-1">CONTROLE OPERACIONAL</p>
             </div>
             <div className="text-right text-xs text-white/70">
@@ -733,147 +577,39 @@ function Dashboard() {
           </div>
         </header>
 
-        {/* Imagem 1 */}
         <div className="relative w-full mb-6 border border-[#00ff88]/50 rounded-lg overflow-hidden bg-black">
-          <img
-            src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.29.58_c74f9ad6-1.jpg"
-            alt="MoveBuss Frota"
-            className="w-full h-auto block"
-            style={{ display: 'block' }}
-          />
-          <div
-            className="absolute left-0 w-full h-1 animate-scanline"
-            style={{
-              background: '#00ff88',
-              boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 60px #00ff88'
-            }}
-          />
+          <img src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.29.58_c74f9ad6-1.jpg" alt="MoveBuss Frota" className="w-full h-auto block" />
+          <div className="absolute left-0 w-full h-1 animate-scanline" style={{ background: '#00ff88', boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88' }} />
         </div>
 
-        {/* Busca */}
         <div className="mb-6">
-          <input
-            type="text"
-            placeholder="🔍 Buscar linha ou destino..."
-            className="w-full bg-black/80 border border-[#00ff88]/50 rounded-lg px-4 py-3 text-[#00ff88] placeholder-[#00ff88]/50 focus:outline-none focus:border-[#00ff88] focus:shadow-[0_0_20px_rgba(0,255,136,0.3)]"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <input type="text" placeholder="🔍 Buscar linha ou destino..." className="w-full bg-black/80 border border-[#00ff88]/50 rounded-lg px-4 py-3 text-[#00ff88] placeholder-[#00ff88]/50 focus:outline-none focus:border-[#00ff88]" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
 
-        {/* Título */}
-        <h3 className="text-center text-[#ff3e3e] text-sm mb-6 tracking-wider">
-          [ SELECIONE UMA LINHA PARA TELEMETRIA ]
-        </h3>
+        <h3 className="text-center text-[#ff3e3e] text-sm mb-6 tracking-wider">[ SELECIONE UMA LINHA PARA TELEMETRIA ]</h3>
 
-        {/* Grid de Linhas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
           {filteredLinhas.map((linha) => (
-            <div
-              key={linha.id}
-              onClick={() => setSelectedLinha(linha)}
-              className="bg-[#001a0d]/90 border border-[#004422] rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ff88] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] hover:scale-[1.02] active:scale-[0.98]"
-            >
+            <div key={linha.id} onClick={() => setSelectedLinha(linha)} className="bg-[#001a0d]/90 border border-[#004422] rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ff88] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] active:scale-[0.98]">
               <span className="text-[#ff3e3e] font-bold text-lg">{linha.id}</span>
               <span className="block text-white/80 text-sm mt-1">{linha.nome}</span>
             </div>
           ))}
         </div>
 
-        {/* Imagem 2 */}
         <div className="relative w-full mb-8 border border-[#00ff88]/50 rounded-lg overflow-hidden bg-black">
-          <img
-            src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.30.07_ed1178f5-1.jpg"
-            alt="MoveBuss Operação"
-            className="w-full h-auto block"
-            style={{ display: 'block' }}
-          />
-          <div
-            className="absolute left-0 w-full h-1 animate-scanline"
-            style={{
-              background: '#00ff88',
-              boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 60px #00ff88'
-            }}
-          />
+          <img src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.30.07_ed1178f5-1.jpg" alt="MoveBuss Operação" className="w-full h-auto block" />
+          <div className="absolute left-0 w-full h-1 animate-scanline" style={{ background: '#00ff88', boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88' }} />
         </div>
 
-        {/* Footer */}
         <footer className="text-center border-t border-white/10 pt-6 pb-8">
           <p className="text-white/30 text-xs mb-2">SISTEMA OPERACIONAL MOVEBUSS // 2026</p>
-          <a
-            href="https://movebuss.com.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#00ff88] text-lg hover:underline"
-          >
-            movebuss.com.br
-          </a>
+          <a href="https://movebuss.com.br" target="_blank" rel="noopener noreferrer" className="text-[#00ff88] text-lg hover:underline">movebuss.com.br</a>
         </footer>
       </div>
 
-      {/* Modal */}
       {selectedLinha && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={() => setSelectedLinha(null)}
-        >
-          <div
-            className="bg-black border-2 border-[#00ff88] rounded-lg p-6 max-w-md w-full shadow-[0_0_50px_rgba(0,255,136,0.5)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-[#ff3e3e] font-bold text-xl border-b border-white/20 pb-3 mb-4">
-              LINHA {selectedLinha.id}
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={() => setSelectedLinha(null)}>
+          <div className="bg-black border-2 border-[#00ff88] rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[#ff3e3e] font-bold text-xl border-b border-white/20 pb-3 mb-4">LINHA {selectedLinha.id}</h3>
             <p className="text-white/80 text-sm mb-4">{selectedLinha.nome}</p>
-
-            <div className="space-y-3">
-              {[
-                { label: 'Duração Viagem', value: `${getDados(selectedLinha.id).dur} min` },
-                { label: 'Intervalo Planejado', value: `${getDados(selectedLinha.id).int} min` },
-                { label: 'Ônibus / Hora', value: `${Math.round(60 / getDados(selectedLinha.id).int)} veíc/h` },
-                { label: 'Tipo de Frota', value: 'DIESEL' },
-                { label: 'Distância', value: `${getDados(selectedLinha.id).dist} km` },
-                { label: 'Tempo no Ponto', value: `~ ${getDados(selectedLinha.id).int} min` },
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between text-sm border-b border-white/10 pb-2">
-                  <span className="text-white/50">{item.label}:</span>
-                  <span className="text-[#00ff88]">{item.value}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setSelectedLinha(null)}
-              className="w-full mt-6 bg-[#ff3e3e] text-white py-3 rounded font-bold hover:bg-[#ff5555] transition-colors"
-            >
-              FECHAR TERMINAL
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ==================== APP PRINCIPAL ====================
-export default function App() {
-  const [stage, setStage] = useState<'galaxy' | 'earth' | 'bus' | 'dashboard'>('galaxy')
-
-  return (
-    <div className="min-h-screen bg-black">
-      {stage === 'galaxy' && <GalaxyCanvas onComplete={() => setStage('earth')} />}
-      {stage === 'earth' && <EarthCanvas onComplete={() => setStage('bus')} />}
-      {stage === 'bus' && <BusAnimation onComplete={() => setStage('dashboard')} />}
-      {stage === 'dashboard' && <Dashboard />}
-
-      {stage !== 'dashboard' && (
-        <button
-          onClick={() => setStage('dashboard')}
-          className="fixed bottom-6 right-6 z-[100] bg-black/50 border border-[#00ff88] text-[#00ff88] px-4 py-2 rounded-lg text-sm hover:bg-[#00ff88] hover:text-black transition-all"
-        >
-          PULAR INTRO →
-        </button>
-      )}
-    </div>
-  )
-}
