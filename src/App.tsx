@@ -661,42 +661,6 @@ const dadosGTFS: Record<string, LinhaData> = {
   "5025-10": { dur: 64, int: 14, dist: 12.5, frot: 5 }
 };
 
-const linhas: Linha[] = [
-  { id: "524M-10", nome: "Mascarenhas de Morais – Shopping Aricanduva" },
-  { id: "3112-10", nome: "Vila Industrial – Metrô Belém" },
-  { id: "414P-10", nome: "Vila Industrial – Metrô Carrão" },
-  { id: "514T-10", nome: "Term. Sacomã – Conj. Hab. Teotônio Vilela" },
-  { id: "4033-10", nome: "Jardim Guairacá – Nova Conquista" },
-  { id: "4734-10", nome: "Vila Moraes – Metrô Saúde" },
-  { id: "5020-10", nome: "Hospital Heliópolis – Term. Sacomã" },
-  { id: "373T-10", nome: "Jardim Itápolis – Metrô Bresser" },
-  { id: "5032-10", nome: "Vila Arapuá – Term. Sacomã" },
-  { id: "4025-10", nome: "Vila Califórnia – Metrô Tatuapé" },
-  { id: "4726-10", nome: "Mooca – Metrô Tatuapé" },
-  { id: "5031-10", nome: "Vila Arapuá – Term. Sacomã" },
-  { id: "573H-10", nome: "Hospital Heliópolis – Metrô Bresser" },
-  { id: "4031-10", nome: "Pq. Santa Madalena – Metrô Tamanduateí" },
-  { id: "524L-10", nome: "Parque São Lucas – Metrô Tatuapé" },
-  { id: "364A-10", nome: "Hospital Ipiranga – Shopping Aricanduva" },
-  { id: "573T-10", nome: "Term. Vila Carrão – Metrô Carrão" },
-  { id: "4028-10", nome: "Hospital São Mateus – Divisa de Mauá" },
-  { id: "4716-10", nome: "Vila Moraes – Metrô Santa Cruz" },
-  { id: "4030-10", nome: "Fazenda da Juta – Shopping Aricanduva" },
-  { id: "3099-10", nome: "Hospital São Mateus – Jardim da Conquista" },
-  { id: "4027-10", nome: "Jardim Santo André – Fazenda da Juta" },
-  { id: "3098-10", nome: "Jardim Marilu – Terminal São Mateus" },
-  { id: "4029-10", nome: "São Mateus – Vila Prudente" },
-  { id: "5035-10", nome: "Vila Moinho Velho – Term. Sacomã" },
-  { id: "3098-31", nome: "Jardim Marilu – Terminal São Mateus (Noturno)" },
-  { id: "4027-41", nome: "Jardim Santo André – Metrô Itaquera" },
-  { id: "4729-10", nome: "Parque Bancário – Metrô Belém" },
-  { id: "574W-10", nome: "Jardim Walkiria – Metrô Belém" },
-  { id: "5031-21", nome: "Vila Arapuá – Term. Sacomã (Pico)" },
-  { id: "4032-10", nome: "Vila das Mercês – Objetivo UNIP" },
-  { id: "4735-10", nome: "Jardim Vera Cruz – Metrô Artur Alvim" },
-  { id: "5025-10", nome: "Jardim Guairacá – Metrô Tamanduateí" }
-];
-
 function Dashboard({ visible }: { visible: boolean }) {
   const [selectedLinha, setSelectedLinha] = useState<Linha | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -860,7 +824,7 @@ function Dashboard({ visible }: { visible: boolean }) {
 }
 
 // ============ MAIN APP ============
-export function App() {
+export default function App() {
   const [stage, setStage] = useState<Stage>('galaxy');
   const [earthProgress, setEarthProgress] = useState(0);
 
