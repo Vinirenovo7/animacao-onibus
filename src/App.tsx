@@ -13,7 +13,6 @@ function GalaxyCanvas({ active }: { active: boolean }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Ajuste seguro de tamanho
     const resize = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -22,7 +21,7 @@ function GalaxyCanvas({ active }: { active: boolean }) {
     window.addEventListener('resize', resize);
 
     const stars: { x: number; y: number; z: number; prevZ: number }[] = [];
-    for (let i = 0; i < 500; i++) { // Reduzi para 500 para ficar mais leve no celular
+    for (let i = 0; i < 600; i++) {
       stars.push({
         x: (Math.random() - 0.5) * canvas.width * 3,
         y: (Math.random() - 0.5) * canvas.height * 3,
@@ -105,7 +104,7 @@ function GalaxyCanvas({ active }: { active: boolean }) {
   );
 }
 
-// ============ EARTH CANVAS (SAFE MODE) ============
+// ============ EARTH CANVAS ============
 function EarthCanvas({ active, progress }: { active: boolean; progress: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const earthImgRef = useRef<HTMLImageElement | null>(null);
@@ -113,18 +112,14 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
 
   useEffect(() => {
     const img = new Image();
-    // IMPORTANTE: Removi crossOrigin para evitar bloqueio no Safari se o header faltar
-    // img.crossOrigin = 'anonymous'; 
+    // Sem crossOrigin para evitar bloqueio no Safari/iOS
     img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/The_Blue_Marble_%28remastered%29.jpg/600px-The_Blue_Marble_%28remastered%29.jpg';
     
     img.onload = () => {
       earthImgRef.current = img;
       setImgLoaded(true);
     };
-    img.onerror = () => {
-        console.log("Imagem da terra falhou, usando fallback");
-        setImgLoaded(false);
-    }
+    img.onerror = () => setImgLoaded(false);
   }, []);
 
   useEffect(() => {
@@ -157,7 +152,6 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
       ctx.fillStyle = '#000010';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Estrelas
       for (let i = 0; i < 150; i++) {
         const x = (Math.sin(i * 132) * 0.5 + 0.5) * canvas.width;
         const y = (Math.cos(i * 453) * 0.5 + 0.5) * canvas.height;
@@ -181,7 +175,6 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
         ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
         ctx.clip();
 
-        // Tenta desenhar imagem, se falhar (Safari), desenha bola azul
         try {
             if (earthImgRef.current && imgLoaded) {
                 const size = radius * 2.1;
@@ -190,7 +183,6 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
                 throw new Error("Fallback");
             }
         } catch (e) {
-            // Fallback processual (Garante que nunca fique tela preta)
             const oceanGradient = ctx.createRadialGradient(centerX - radius * 0.3, centerY - radius * 0.3, 0, centerX, centerY, radius);
             oceanGradient.addColorStop(0, '#1e90ff');
             oceanGradient.addColorStop(1, '#001a44');
@@ -220,7 +212,6 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Texto
         if (progress > 0.3) {
           ctx.font = 'bold 16px monospace';
           ctx.fillStyle = '#00ff88';
@@ -256,7 +247,7 @@ function EarthCanvas({ active, progress }: { active: boolean; progress: number }
   );
 }
 
-// ============ MATRIX RAIN ============
+// ============ MATRIX RAIN (CORRIGIDO E TURBINADO) ============
 function MatrixRain({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -275,14 +266,21 @@ function MatrixRain({ active }: { active: boolean }) {
 
     const columns = Math.floor(canvas.width / 20);
     const drops: number[] = Array(columns).fill(0).map(() => Math.random() * -50);
-    const chars = '01MOVEBUSS';
+    // Caracteres estilo Matrix original (Katakana + Números)
+    const chars = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     let animationId: number;
 
     const animate = () => {
+      // Nota: Não limpamos se não estiver ativo para manter o fundo preto, 
+      // mas se active for false, o canvas inteiro fica com opacidade 0 pelo CSS.
       if (!active) return;
+      
+      // Fundo semi-transparente para dar efeito de rastro
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#00ff88';
       ctx.font = '15px monospace';
 
       for (let i = 0; i < drops.length; i++) {
@@ -290,10 +288,11 @@ function MatrixRain({ active }: { active: boolean }) {
         const x = i * 20;
         const y = drops[i] * 20;
 
-        ctx.fillStyle = '#00ff88';
+        // Variação de cor para ficar mais dinâmico
+        ctx.fillStyle = Math.random() > 0.95 ? '#fff' : '#00ff88';
         ctx.fillText(char, x, y);
 
-        if (y > canvas.height && Math.random() > 0.98) drops[i] = 0;
+        if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
       animationId = requestAnimationFrame(animate);
@@ -313,7 +312,11 @@ function MatrixRain({ active }: { active: boolean }) {
       style={{
           position: 'fixed', top: 0, left: 0,
           width: '100%', height: '100%',
-          zIndex: -1, opacity: active ? 0.2 : 0,
+          // zIndex 0 para ficar atrás do conteúdo (que é 20) mas na frente do fundo preto
+          zIndex: 0, 
+          // Opacidade ajustada para 0.3 para ser visível mas não atrapalhar leitura
+          opacity: active ? 0.3 : 0,
+          transition: 'opacity 2s',
           pointerEvents: 'none'
       }}
     />
@@ -344,20 +347,17 @@ function BusAnimation() {
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
       
-      // Fundo
       const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
       skyGrad.addColorStop(0, '#0a1a0a');
       skyGrad.addColorStop(1, '#1a2a1a');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // Cidade
       ctx.fillStyle = '#001a0a';
       for(let i=0; i<15; i++) {
           ctx.fillRect(i * (width/15), height - 25 - (Math.sin(i)*20 + 30), (width/15)-2, 100);
       }
 
-      // Estrada
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, height - 22, width, 22);
       ctx.strokeStyle = '#ffcc00';
@@ -370,7 +370,6 @@ function BusAnimation() {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Ônibus
       const busY = height - 60 + Math.sin(time * 0.4) * 0.5;
       const busW = 130;
       const busH = 42;
@@ -378,38 +377,24 @@ function BusAnimation() {
       ctx.save();
       ctx.translate(busX, busY);
 
-      // Sombra
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.beginPath();
-      ctx.ellipse(busW / 2, busH + 5, busW / 2 - 5, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.ellipse(busW / 2, busH + 5, busW / 2 - 5, 4, 0, 0, Math.PI * 2); ctx.fill();
 
-      // Lataria
       ctx.fillStyle = '#f8f8f8';
-      ctx.beginPath();
-      ctx.roundRect(0, 8, busW, busH - 8, [6, 6, 3, 3]);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(0, 8, busW, busH - 8, [6, 6, 3, 3]); ctx.fill();
       ctx.fillStyle = '#00aa55';
-      ctx.beginPath();
-      ctx.roundRect(0, 8, busW, 14, [6, 6, 0, 0]);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(0, 8, busW, 14, [6, 6, 0, 0]); ctx.fill();
       ctx.fillStyle = '#00cc66';
       ctx.fillRect(0, 30, busW, 6);
 
-      // Janelas
       ctx.fillStyle = '#87ceeb';
       for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.roundRect(10 + i * 20, 10, 15, 15, 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(10 + i * 20, 10, 15, 15, 2); ctx.fill();
       }
-      ctx.beginPath();
-      ctx.roundRect(busW - 22, 10, 18, 18, [2, 5, 2, 2]); // Parabrisa
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(busW - 22, 10, 18, 18, [2, 5, 2, 2]); ctx.fill();
 
-      // Detalhes
       ctx.fillStyle = '#fff';
-      ctx.fillRect(5, 22, 28, 10); // Letreiro
+      ctx.fillRect(5, 22, 28, 10);
       ctx.fillStyle = '#00aa55';
       ctx.font = 'bold 7px Arial';
       ctx.textAlign = 'center';
@@ -418,7 +403,6 @@ function BusAnimation() {
       ctx.textAlign = 'left';
       ctx.fillText('MOVEBUSS', 45, busH - 4);
 
-      // Rodas
       const drawWheel = (x: number) => {
           const wy = busH - 2;
           ctx.fillStyle = '#111';
