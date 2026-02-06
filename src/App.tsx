@@ -123,21 +123,18 @@ function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
     function animate() {
       ctx!.fillStyle = 'rgba(0, 0, 0, 0.2)'
       ctx!.fillRect(0, 0, canvas!.width, canvas!.height)
-
       const cx = canvas!.width / 2
       const cy = canvas!.height / 2
 
       stars.forEach(star => {
         star.prevZ = star.z
         star.z -= speed
-
         if (star.z <= 0) {
           star.x = (Math.random() - 0.5) * canvas!.width * 3
           star.y = (Math.random() - 0.5) * canvas!.height * 3
           star.z = canvas!.width
           star.prevZ = star.z
         }
-
         const sx = (star.x / star.z) * 200 + cx
         const sy = (star.y / star.z) * 200 + cy
         const px = (star.x / star.prevZ) * 200 + cx
@@ -150,16 +147,13 @@ function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
         ctx!.strokeStyle = star.color
         ctx!.lineWidth = size
         ctx!.stroke()
-
         ctx!.beginPath()
         ctx!.arc(sx, sy, size / 2, 0, Math.PI * 2)
         ctx!.fillStyle = star.color
         ctx!.fill()
       })
-
       animationId = requestAnimationFrame(animate)
     }
-
     animate()
 
     const timer = setTimeout(() => {
@@ -177,9 +171,7 @@ function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
       <canvas ref={canvasRef} className="absolute inset-0" />
       <div className="relative z-10 text-center">
-        <h1 className="text-4xl md:text-6xl font-orbitron text-white mb-4 animate-pulse">
-          MOVEBUSS
-        </h1>
+        <h1 className="text-4xl md:text-6xl font-orbitron text-white mb-4 animate-pulse">MOVEBUSS</h1>
         <p className="text-[#00ff88] text-lg tracking-[0.5em]">INICIANDO SISTEMA...</p>
       </div>
     </div>
@@ -189,14 +181,6 @@ function GalaxyCanvas({ onComplete }: { onComplete: () => void }) {
 function EarthCanvas({ onComplete }: { onComplete: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [zoomLevel, setZoomLevel] = useState(0)
-  const earthImageRef = useRef<HTMLImageElement | null>(null)
-
-  useEffect(() => {
-    const img = new Image()
-    img.crossOrigin = "anonymous"
-    img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/The_Blue_Marble_%28remastered%29.jpg/800px-The_Blue_Marble_%28remastered%29.jpg"
-    img.onload = () => { earthImageRef.current = img }
-  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -206,65 +190,41 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
-
-    const stars: {x: number, y: number, size: number, alpha: number}[] = []
-    for (let i = 0; i < 300; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2,
-        alpha: Math.random()
-      })
-    }
-
     let animationId: number
-    let rotation = 0
     let scanAngle = 0
 
     function animate() {
       ctx!.fillStyle = '#000011'
       ctx!.fillRect(0, 0, canvas!.width, canvas!.height)
 
-      stars.forEach(star => {
-        star.alpha = 0.3 + Math.random() * 0.7
+      for (let i = 0; i < 200; i++) {
         ctx!.beginPath()
-        ctx!.arc(star.x, star.y, star.size, 0, Math.PI * 2)
-        ctx!.fillStyle = `rgba(255, 255, 255, ${star.alpha})`
+        ctx!.arc((i * 137) % canvas!.width, (i * 97) % canvas!.height, Math.random() * 1.5, 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(255,255,255,${Math.random()})`
         ctx!.fill()
-      })
+      }
 
       const cx = canvas!.width / 2
       const cy = canvas!.height / 2
       const baseRadius = Math.min(canvas!.width, canvas!.height) * 0.15
       const radius = baseRadius + (zoomLevel * baseRadius * 2)
 
-      ctx!.save()
+      const gradient = ctx!.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius)
+      gradient.addColorStop(0, '#4a90d9')
+      gradient.addColorStop(0.5, '#2d5f8a')
+      gradient.addColorStop(1, '#1a3a5c')
       ctx!.beginPath()
       ctx!.arc(cx, cy, radius, 0, Math.PI * 2)
-      ctx!.clip()
+      ctx!.fillStyle = gradient
+      ctx!.fill()
 
-      if (earthImageRef.current) {
-        ctx!.save()
-        ctx!.translate(cx, cy)
-        rotation += 0.002
-        const offsetX = (rotation * 100) % (radius * 2)
-        ctx!.drawImage(earthImageRef.current, -radius - offsetX, -radius, radius * 4, radius * 2)
-        ctx!.restore()
-      } else {
-        const gradient = ctx!.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius)
-        gradient.addColorStop(0, '#4a90d9')
-        gradient.addColorStop(0.5, '#2d5f8a')
-        gradient.addColorStop(1, '#1a3a5c')
-        ctx!.fillStyle = gradient
-        ctx!.fillRect(cx - radius, cy - radius, radius * 2, radius * 2)
-
-        ctx!.fillStyle = '#3d8b3d'
-        ctx!.beginPath()
-        ctx!.ellipse(cx - radius * 0.3, cy - radius * 0.2, radius * 0.4, radius * 0.3, 0.3, 0, Math.PI * 2)
-        ctx!.fill()
-      }
-
-      ctx!.restore()
+      ctx!.fillStyle = '#3d8b3d'
+      ctx!.beginPath()
+      ctx!.ellipse(cx - radius * 0.2, cy - radius * 0.1, radius * 0.35, radius * 0.25, 0.3, 0, Math.PI * 2)
+      ctx!.fill()
+      ctx!.beginPath()
+      ctx!.ellipse(cx + radius * 0.3, cy + radius * 0.2, radius * 0.2, radius * 0.3, -0.2, 0, Math.PI * 2)
+      ctx!.fill()
 
       for (let i = 1; i <= 3; i++) {
         ctx!.beginPath()
@@ -278,14 +238,10 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
       ctx!.translate(cx, cy)
       scanAngle += 0.03
       ctx!.rotate(scanAngle)
-      const scanGradient = ctx!.createLinearGradient(0, 0, radius + 30, 0)
-      scanGradient.addColorStop(0, 'rgba(0, 255, 136, 0)')
-      scanGradient.addColorStop(0.5, 'rgba(0, 255, 136, 0.8)')
-      scanGradient.addColorStop(1, 'rgba(0, 255, 136, 0)')
       ctx!.beginPath()
       ctx!.moveTo(0, 0)
       ctx!.lineTo(radius + 30, 0)
-      ctx!.strokeStyle = scanGradient
+      ctx!.strokeStyle = '#00ff88'
       ctx!.lineWidth = 3
       ctx!.stroke()
       ctx!.restore()
@@ -293,12 +249,10 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
       if (zoomLevel > 0.3) {
         const spX = cx + 20
         const spY = cy + 10
-
         ctx!.beginPath()
         ctx!.arc(spX, spY, 8 + Math.sin(Date.now() / 200) * 3, 0, Math.PI * 2)
         ctx!.fillStyle = 'rgba(0, 255, 136, 0.8)'
         ctx!.fill()
-
         ctx!.font = '14px monospace'
         ctx!.fillStyle = '#00ff88'
         ctx!.fillText('SÃO PAULO, BRASIL', spX + 20, spY)
@@ -306,7 +260,6 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
 
       animationId = requestAnimationFrame(animate)
     }
-
     animate()
     return () => cancelAnimationFrame(animationId)
   }, [zoomLevel])
@@ -329,11 +282,9 @@ function EarthCanvas({ onComplete }: { onComplete: () => void }) {
     <div className="fixed inset-0 z-50 bg-black">
       <canvas ref={canvasRef} className="absolute inset-0" />
       <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-center">
-        <p className="text-[#00ff88] text-lg font-mono tracking-wider animate-pulse">
-          LOCALIZANDO: SÃO PAULO, BRASIL
-        </p>
+        <p className="text-[#00ff88] text-lg font-mono tracking-wider animate-pulse">LOCALIZANDO: SÃO PAULO, BRASIL</p>
         <div className="mt-2 w-64 h-1 bg-gray-800 rounded-full overflow-hidden mx-auto">
-          <div className="h-full bg-[#00ff88] transition-all duration-100" style={{ width: `${zoomLevel * 100}%` }} />
+          <div className="h-full bg-[#00ff88]" style={{ width: `${zoomLevel * 100}%` }} />
         </div>
       </div>
     </div>
@@ -352,7 +303,6 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
-
     let roadOffset = 0
     let wheelRotation = 0
     let animationId: number
@@ -364,7 +314,7 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
 
       ctx!.fillStyle = '#ffffff'
       ctx!.beginPath()
-      ctx!.roundRect(x, y - busHeight, busWidth, busHeight, [15, 15, 5, 5])
+      ctx!.roundRect(x, y - busHeight, busWidth, busHeight, 10)
       ctx!.fill()
 
       ctx!.fillStyle = '#00aa55'
@@ -375,16 +325,10 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
 
       ctx!.fillStyle = '#1a1a2e'
       for (let i = 0; i < 5; i++) {
-        const windowX = x + 45 + i * 45
         ctx!.beginPath()
-        ctx!.roundRect(windowX, y - busHeight + 30, 35, 30, 3)
+        ctx!.roundRect(x + 45 + i * 45, y - busHeight + 30, 35, 30, 3)
         ctx!.fill()
       }
-
-      ctx!.fillStyle = '#1a1a2e'
-      ctx!.beginPath()
-      ctx!.roundRect(x + 5, y - busHeight + 20, 30, 50, 5)
-      ctx!.fill()
 
       ctx!.fillStyle = '#111'
       ctx!.fillRect(x + 5, y - busHeight - 15, busWidth - 10, 18)
@@ -397,23 +341,13 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
       ctx!.fillText('MOVEBUSS', x + busWidth / 2 - 40, y - 12)
 
       const wheelRadius = 18
-      const wheel1X = x + 50
-      const wheel2X = x + busWidth - 50
-      const wheelY = y
-
-      for (const wx of [wheel1X, wheel2X]) {
+      for (const wx of [x + 50, x + busWidth - 50]) {
         ctx!.fillStyle = '#222'
         ctx!.beginPath()
-        ctx!.arc(wx, wheelY, wheelRadius, 0, Math.PI * 2)
+        ctx!.arc(wx, y, wheelRadius, 0, Math.PI * 2)
         ctx!.fill()
-
-        ctx!.fillStyle = '#444'
-        ctx!.beginPath()
-        ctx!.arc(wx, wheelY, wheelRadius - 5, 0, Math.PI * 2)
-        ctx!.fill()
-
         ctx!.save()
-        ctx!.translate(wx, wheelY)
+        ctx!.translate(wx, y)
         ctx!.rotate(wheelRotation)
         ctx!.strokeStyle = '#666'
         ctx!.lineWidth = 2
@@ -440,24 +374,15 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
     function animate() {
       const gradient = ctx!.createLinearGradient(0, 0, 0, canvas!.height)
       gradient.addColorStop(0, '#0a0a1a')
-      gradient.addColorStop(0.6, '#1a1a3a')
       gradient.addColorStop(1, '#2a2a4a')
       ctx!.fillStyle = gradient
       ctx!.fillRect(0, 0, canvas!.width, canvas!.height)
 
-      for (let i = 0; i < 100; i++) {
-        ctx!.beginPath()
-        ctx!.arc((i * 137) % canvas!.width, (i * 97) % (canvas!.height * 0.4), Math.random() * 1.5, 0, Math.PI * 2)
-        ctx!.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.5})`
-        ctx!.fill()
-      }
-
       ctx!.fillStyle = '#1a1a2e'
       for (let i = 0; i < 15; i++) {
-        const buildingX = i * 100 - 50
-        const buildingHeight = 80 + Math.sin(i * 2) * 40
-        const buildingWidth = 60 + Math.cos(i) * 20
-        ctx!.fillRect(buildingX, canvas!.height / 2 - buildingHeight + 50, buildingWidth, buildingHeight)
+        const bx = i * 100 - 50
+        const bh = 80 + Math.sin(i * 2) * 40
+        ctx!.fillRect(bx, canvas!.height / 2 - bh + 50, 60, bh)
       }
 
       ctx!.fillStyle = '#333'
@@ -471,10 +396,8 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
 
       wheelRotation += 0.3
       drawBus(busPosition)
-
       animationId = requestAnimationFrame(animate)
     }
-
     animate()
     return () => cancelAnimationFrame(animationId)
   }, [busPosition])
@@ -501,10 +424,6 @@ function BusAnimation({ onComplete }: { onComplete: () => void }) {
         <h2 className="text-3xl font-orbitron text-[#00ff88] mb-2">MOVEBUSS</h2>
         <p className="text-white/70 tracking-widest">SISTEMA OPERACIONAL</p>
       </div>
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-        <span className="text-red-500 text-sm font-bold">LIVE</span>
-      </div>
     </div>
   )
 }
@@ -525,12 +444,11 @@ function MatrixRain() {
     const drops: number[] = []
     for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100
 
-    const chars = 'MOVEBUSS01アイウエオカキクケコ'
+    const chars = 'MOVEBUSS01'
 
     function animate() {
       ctx!.fillStyle = 'rgba(0, 0, 0, 0.05)'
       ctx!.fillRect(0, 0, canvas!.width, canvas!.height)
-      ctx!.fillStyle = '#00ff88'
       ctx!.font = '15px monospace'
 
       for (let i = 0; i < drops.length; i++) {
@@ -579,18 +497,18 @@ function Dashboard() {
 
         <div className="relative w-full mb-6 border border-[#00ff88]/50 rounded-lg overflow-hidden bg-black">
           <img src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.29.58_c74f9ad6-1.jpg" alt="MoveBuss Frota" className="w-full h-auto block" />
-          <div className="absolute left-0 w-full h-1 animate-scanline" style={{ background: '#00ff88', boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88' }} />
+          <div className="absolute left-0 w-full h-1 animate-scanline" style={{ background: '#00ff88', boxShadow: '0 0 20px #00ff88' }} />
         </div>
 
         <div className="mb-6">
-          <input type="text" placeholder="🔍 Buscar linha ou destino..." className="w-full bg-black/80 border border-[#00ff88]/50 rounded-lg px-4 py-3 text-[#00ff88] placeholder-[#00ff88]/50 focus:outline-none focus:border-[#00ff88]" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Buscar linha ou destino..." className="w-full bg-black/80 border border-[#00ff88]/50 rounded-lg px-4 py-3 text-[#00ff88] placeholder-[#00ff88]/50 focus:outline-none focus:border-[#00ff88]" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
 
         <h3 className="text-center text-[#ff3e3e] text-sm mb-6 tracking-wider">[ SELECIONE UMA LINHA PARA TELEMETRIA ]</h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
           {filteredLinhas.map((linha) => (
-            <div key={linha.id} onClick={() => setSelectedLinha(linha)} className="bg-[#001a0d]/90 border border-[#004422] rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-[#00ff88] hover:shadow-[0_0_20px_rgba(0,255,136,0.3)] active:scale-[0.98]">
+            <div key={linha.id} onClick={() => setSelectedLinha(linha)} className="bg-[#001a0d]/90 border border-[#004422] rounded-lg p-4 cursor-pointer hover:border-[#00ff88]">
               <span className="text-[#ff3e3e] font-bold text-lg">{linha.id}</span>
               <span className="block text-white/80 text-sm mt-1">{linha.nome}</span>
             </div>
@@ -599,7 +517,7 @@ function Dashboard() {
 
         <div className="relative w-full mb-8 border border-[#00ff88]/50 rounded-lg overflow-hidden bg-black">
           <img src="https://movebuss.com.br/wp-content/uploads/2025/04/Imagem-do-WhatsApp-de-2025-04-29-as-10.30.07_ed1178f5-1.jpg" alt="MoveBuss Operação" className="w-full h-auto block" />
-          <div className="absolute left-0 w-full h-1 animate-scanline" style={{ background: '#00ff88', boxShadow: '0 0 20px #00ff88, 0 0 40px #00ff88' }} />
+          <div className="absolute left-0 w-full h-1 animate-scanline" style={{ background: '#00ff88', boxShadow: '0 0 20px #00ff88' }} />
         </div>
 
         <footer className="text-center border-t border-white/10 pt-6 pb-8">
@@ -613,3 +531,55 @@ function Dashboard() {
           <div className="bg-black border-2 border-[#00ff88] rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[#ff3e3e] font-bold text-xl border-b border-white/20 pb-3 mb-4">LINHA {selectedLinha.id}</h3>
             <p className="text-white/80 text-sm mb-4">{selectedLinha.nome}</p>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                <span className="text-white/50">Duração Viagem:</span>
+                <span className="text-[#00ff88]">{getDados(selectedLinha.id).dur} min</span>
+              </div>
+              <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                <span className="text-white/50">Intervalo Planejado:</span>
+                <span className="text-[#00ff88]">{getDados(selectedLinha.id).int} min</span>
+              </div>
+              <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                <span className="text-white/50">Ônibus / Hora:</span>
+                <span className="text-[#00ff88]">{Math.round(60 / getDados(selectedLinha.id).int)} veíc/h</span>
+              </div>
+              <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                <span className="text-white/50">Tipo de Frota:</span>
+                <span className="text-[#00ff88]">DIESEL</span>
+              </div>
+              <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                <span className="text-white/50">Distância:</span>
+                <span className="text-[#00ff88]">{getDados(selectedLinha.id).dist} km</span>
+              </div>
+              <div className="flex justify-between text-sm border-b border-white/10 pb-2">
+                <span className="text-white/50">Tempo no Ponto:</span>
+                <span className="text-[#00ff88]">~ {getDados(selectedLinha.id).int} min</span>
+              </div>
+            </div>
+            <button onClick={() => setSelectedLinha(null)} className="w-full mt-6 bg-[#ff3e3e] text-white py-3 rounded font-bold hover:bg-[#ff5555]">FECHAR TERMINAL</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function App() {
+  const [stage, setStage] = useState<'galaxy' | 'earth' | 'bus' | 'dashboard'>('galaxy')
+
+  return (
+    <div className="min-h-screen bg-black">
+      {stage === 'galaxy' && <GalaxyCanvas onComplete={() => setStage('earth')} />}
+      {stage === 'earth' && <EarthCanvas onComplete={() => setStage('bus')} />}
+      {stage === 'bus' && <BusAnimation onComplete={() => setStage('dashboard')} />}
+      {stage === 'dashboard' && <Dashboard />}
+
+      {stage !== 'dashboard' && (
+        <button onClick={() => setStage('dashboard')} className="fixed bottom-6 right-6 z-[100] bg-black/50 border border-[#00ff88] text-[#00ff88] px-4 py-2 rounded-lg text-sm hover:bg-[#00ff88] hover:text-black">
+          PULAR INTRO
+        </button>
+      )}
+    </div>
+  )
+}
